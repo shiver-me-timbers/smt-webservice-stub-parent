@@ -1,0 +1,8 @@
+target/
+smt-webservice-stub-server-lambda/remove-namespaces.xslt
+smt-webservice-stub-server-lambda/remove-tag.xslt
+
+# Scatch File
+test.json
+test.txt
+test.xml
