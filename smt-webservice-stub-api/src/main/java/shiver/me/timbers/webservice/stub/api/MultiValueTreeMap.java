@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Map.Entry;
 import static java.util.stream.Collectors.toMap;
@@ -32,6 +33,7 @@ import static java.util.stream.Collectors.toMap;
  */
 public class MultiValueTreeMap<K extends Comparable, V> extends TreeMap<K, List<V>> {
 
+    @SafeVarargs
     public static <K extends Comparable, V> Entry<K, List<V>> e(K key, V... values) {
         return e(key, asList(values));
     }
@@ -41,6 +43,9 @@ public class MultiValueTreeMap<K extends Comparable, V> extends TreeMap<K, List<
     }
 
     public static <K extends Comparable, V> MultiValueTreeMap<K, V> toMultiTreeMap(Map<K, V> map) {
+        if (map == null) {
+            return null;
+        }
         return new MultiValueTreeMap<>(
             map.entrySet().stream().collect(toMap(Entry::getKey, entry -> singletonList(entry.getValue())))
         );
@@ -49,8 +54,9 @@ public class MultiValueTreeMap<K extends Comparable, V> extends TreeMap<K, List<
     public MultiValueTreeMap() {
     }
 
+    @SafeVarargs
     public MultiValueTreeMap(Entry<K, List<V>>... entries) {
-        this(asList(entries));
+        this(entries == null ? null : asList(entries));
     }
 
     public MultiValueTreeMap(Collection<Entry<K, List<V>>> entries) {
@@ -58,7 +64,7 @@ public class MultiValueTreeMap<K extends Comparable, V> extends TreeMap<K, List<
     }
 
     public MultiValueTreeMap(Map<K, List<V>> map) {
-        super(map);
+        super(map == null ? emptyMap() : map);
     }
 
     @SuppressWarnings("unchecked")
@@ -81,6 +87,9 @@ public class MultiValueTreeMap<K extends Comparable, V> extends TreeMap<K, List<
     }
 
     private static <K extends Comparable, V> Map<K, List<V>> toMultiTreeMap(Collection<Entry<K, List<V>>> values) {
+        if (values == null) {
+            return null;
+        }
         final MultiValueTreeMap<K, V> map = new MultiValueTreeMap<>();
         values.forEach(entry -> map.add(entry.getKey(), entry.getValue()));
         return map;

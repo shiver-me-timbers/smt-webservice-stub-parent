@@ -92,6 +92,7 @@ public class CleanerTest {
         final StringStubRequest expected = mock(StringStubRequest.class);
 
         // Given
+        given(request.getBody()).willReturn(someString());
         given(bodyCleaner1.supports(request)).willReturn(false);
         given(bodyCleaner2.supports(request)).willReturn(true);
         given(bodyCleaner2.cleanBody(request)).willReturn(expected);
@@ -112,6 +113,24 @@ public class CleanerTest {
         // Given
         given(bodyCleaner1.supports(expected)).willReturn(false);
         given(bodyCleaner2.supports(expected)).willReturn(false);
+
+        // When
+        final StringStubRequest actual = cleaner.cleanBody(expected);
+
+        // Then
+        then(bodyCleaner1).should(never()).cleanBody(any(StringStubRequest.class));
+        then(bodyCleaner2).should(never()).cleanBody(any(StringStubRequest.class));
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void Will_not_clean_a_null_request_body() {
+
+        final StringStubRequest expected = mock(StringStubRequest.class);
+
+        // Given
+        given(bodyCleaner1.supports(expected)).willReturn(true);
+        given(bodyCleaner2.supports(expected)).willReturn(true);
 
         // When
         final StringStubRequest actual = cleaner.cleanBody(expected);

@@ -91,8 +91,4 @@ public class StubServerConfiguration {
     public IOStreams ioStreams() {
         return new IOStreams();
     }
-
-    private static InputStream resource(String path) {
-        return ClassLoader.getSystemResourceAsStream(path);
-    }
 }

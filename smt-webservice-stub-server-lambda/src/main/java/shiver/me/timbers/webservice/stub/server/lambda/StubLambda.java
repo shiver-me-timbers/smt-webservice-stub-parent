@@ -35,13 +35,15 @@ import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.re
 public class StubLambda implements ProxyRequestHandler {
 
     private final Logger log = Logger.getLogger(getClass());
+    private final PathFinder pathFinder;
     private final Stub stub;
 
     public StubLambda() {
-        this(new Stub(digester(), repository()));
+        this(new PathFinder(), new Stub(digester(), repository()));
     }
 
-    StubLambda(Stub stub) {
+    StubLambda(PathFinder pathFinder, Stub stub) {
+        this.pathFinder = pathFinder;
         this.stub = stub;
     }
 
@@ -51,7 +53,7 @@ public class StubLambda implements ProxyRequestHandler {
         final StringStubResponse response = stub.call(
             new StringStubRequest(request.getBody())
                 .withMethod(request.getHttpMethod())
-                .withPath(request.getPath())
+                .withPath(pathFinder.findPath(request))
                 .withQuery(new StubQuery(toMultiTreeMap(request.getQueryStringParameters())))
                 .withHeaders(new StubHeaders(toMultiTreeMap(request.getHeaders())))
         );

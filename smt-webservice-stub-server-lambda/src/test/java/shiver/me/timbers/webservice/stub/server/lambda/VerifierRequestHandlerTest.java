@@ -23,9 +23,9 @@ import org.junit.Before;
 import org.junit.Test;
 import shiver.me.timbers.aws.apigateway.proxy.ProxyRequest;
 import shiver.me.timbers.aws.apigateway.proxy.ProxyResponse;
-import shiver.me.timbers.webservice.stub.api.Verifying;
 import shiver.me.timbers.webservice.stub.server.Verifier;
 import shiver.me.timbers.webservice.stub.server.VerifyRequestException;
+import shiver.me.timbers.webservice.stub.server.lambda.api.StringVerifying;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -40,7 +40,7 @@ import static shiver.me.timbers.data.random.RandomStrings.someString;
 public class VerifierRequestHandlerTest {
 
     private Verifier verifier;
-    private RequestHandler<ProxyRequest<Verifying>, ProxyResponse<String>> soapVerifying;
+    private RequestHandler<ProxyRequest<StringVerifying>, ProxyResponse<String>> soapVerifying;
 
     @Before
     public void setUp() {
@@ -52,9 +52,9 @@ public class VerifierRequestHandlerTest {
     @SuppressWarnings("unchecked")
     public void Can_verify_a_soap_request() {
 
-        final ProxyRequest<Verifying> request = mock(ProxyRequest.class);
+        final ProxyRequest<StringVerifying> request = mock(ProxyRequest.class);
 
-        final Verifying verifying = mock(Verifying.class);
+        final StringVerifying verifying = mock(StringVerifying.class);
 
         // Given
         given(request.getBody()).willReturn(verifying);
@@ -73,9 +73,9 @@ public class VerifierRequestHandlerTest {
     @SuppressWarnings("unchecked")
     public void Can_fail_to_verify_a_soap_request_because_it_is_called_more_than_once() {
 
-        final ProxyRequest<Verifying> request = mock(ProxyRequest.class);
+        final ProxyRequest<StringVerifying> request = mock(ProxyRequest.class);
 
-        final Verifying verifying = mock(Verifying.class);
+        final StringVerifying verifying = mock(StringVerifying.class);
         final VerifyRequestException exception = mock(VerifyRequestException.class);
         final String message = someString();
 

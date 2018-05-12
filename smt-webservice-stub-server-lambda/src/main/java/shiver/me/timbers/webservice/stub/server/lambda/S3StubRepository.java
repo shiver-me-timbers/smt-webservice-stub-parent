@@ -33,9 +33,6 @@ import static java.util.stream.Collectors.toList;
 
 class S3StubRepository extends StubRepository {
 
-    static final DateTimeFormatter FORMATTER = DateTimeFormatter
-        .ofPattern("yyyy-MM-dd-HH-mm-ss-SSSS").withZone(ZoneId.systemDefault());
-
     private final Logger log = Logger.getLogger(getClass());
 
     private final String bucketName;

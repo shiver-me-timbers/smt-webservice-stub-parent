@@ -19,11 +19,13 @@ package shiver.me.timbers.webservice.stub.api;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import static java.util.AbstractMap.SimpleEntry;
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.Map.Entry;
 import static java.util.stream.Collectors.toList;
@@ -31,11 +33,14 @@ import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Stream.concat;
 import static java.util.stream.Stream.of;
 import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static shiver.me.timbers.data.random.RandomStrings.someString;
 import static shiver.me.timbers.data.random.RandomThings.someThing;
 import static shiver.me.timbers.webservice.stub.api.MultiValueTreeMap.e;
+import static shiver.me.timbers.webservice.stub.api.MultiValueTreeMap.toMultiTreeMap;
 
 public class MultiValueTreeMapTest {
 
@@ -95,6 +100,39 @@ public class MultiValueTreeMapTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    public void Can_create_a_multi_value_tree_map_from_null_entries() {
+
+        // When
+        final MultiValueTreeMap<String, Object> actual = new MultiValueTreeMap((Entry[]) null);
+
+        // Then
+        assertThat(actual, equalTo(emptyMap()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void Can_create_a_multi_value_tree_map_from_a_null_collection() {
+
+        // When
+        final MultiValueTreeMap<String, Object> actual = new MultiValueTreeMap((Collection<Entry>) null);
+
+        // Then
+        assertThat(actual, equalTo(emptyMap()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void Can_create_a_multi_value_tree_map_from_a_null_map() {
+
+        // When
+        final MultiValueTreeMap<String, Object> actual = new MultiValueTreeMap((Map) null);
+
+        // Then
+        assertThat(actual, equalTo(emptyMap()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     public void Can_set_an_entry() {
 
         // Given
@@ -139,5 +177,16 @@ public class MultiValueTreeMapTest {
 
         // Then
         assertThat(actual, hasEntry(name, concat(of(value1, value2, value3), value4.stream()).collect(toList())));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void Can_convert_a_null_map() {
+
+        // When
+        final MultiValueTreeMap<String, Object> actual = toMultiTreeMap(null);
+
+        // Then
+        assertThat(actual, nullValue());
     }
 }

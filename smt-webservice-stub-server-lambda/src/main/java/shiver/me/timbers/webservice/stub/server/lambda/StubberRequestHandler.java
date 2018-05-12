@@ -25,8 +25,9 @@ import shiver.me.timbers.webservice.stub.api.Stubbing;
 import shiver.me.timbers.webservice.stub.server.StubRepository;
 import shiver.me.timbers.webservice.stub.server.Stubber;
 import shiver.me.timbers.webservice.stub.server.digest.Digester;
+import shiver.me.timbers.webservice.stub.server.lambda.api.StringStubbing;
 
-class StubberRequestHandler implements DeserialisedProxyRequestHandler<Stubbing, String> {
+class StubberRequestHandler implements DeserialisedProxyRequestHandler<StringStubbing, String> {
 
     private final Logger log = Logger.getLogger(getClass());
 
@@ -42,7 +43,7 @@ class StubberRequestHandler implements DeserialisedProxyRequestHandler<Stubbing,
 
     @SuppressWarnings("unchecked")
     @Override
-    public ProxyResponse<String> handleRequest(ProxyRequest<Stubbing> request, Context context) {
+    public ProxyResponse<String> handleRequest(ProxyRequest<StringStubbing> request, Context context) {
         log.info("START: Setting up stub.");
         stubber.stubCall(request.getBody());
         return new StubberProxyResponse("SOAP stub saved.");

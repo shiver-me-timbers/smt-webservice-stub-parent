@@ -34,16 +34,24 @@ import static java.util.Arrays.asList;
 
 class StubLambdaSetup {
 
+    private static ObjectMapper JSON_MAPPER;
+    private static XmlMapper XML_MAPPER;
     private static Digester DIGESTER;
     private static S3StubRepository REPOSITORY;
     private static Env ENV;
 
-    static ObjectMapper mapper() {
-        return new ObjectMapper();
+    static ObjectMapper jsonMapper() {
+        if (JSON_MAPPER == null) {
+            JSON_MAPPER = new ObjectMapper();
+        }
+        return JSON_MAPPER;
     }
 
     static XmlMapper xmlMapper() {
-        return new XmlMapper();
+        if (XML_MAPPER == null) {
+            XML_MAPPER = new XmlMapper();
+        }
+        return XML_MAPPER;
     }
 
     static Digester digester() {
@@ -53,9 +61,9 @@ class StubLambdaSetup {
                     env().getAsSet("STUB_HEADERS_TO_KEEP"),
                     asList(
                         new XmlBodyCleaner(xmlMapper(), new MapKeyFilter(env().getAsSet("STUB_XML_TAGS_TO_IGNORE"))),
-                        new JsonBodyCleaner(mapper(), new MapKeyFilter(env().getAsSet("STUB_JSON_FIELDS_TO_IGNORE")))
+                        new JsonBodyCleaner(jsonMapper(), new MapKeyFilter(env().getAsSet("STUB_JSON_FIELDS_TO_IGNORE")))
                     ),
-                    mapper()
+                    jsonMapper()
                 ),
                 new MessageDigestFactory(),
                 new Encoding()
@@ -67,7 +75,7 @@ class StubLambdaSetup {
     static S3StubRepository repository() {
         if (REPOSITORY == null) {
             REPOSITORY = new S3StubRepository(
-                mapper(),
+                jsonMapper(),
                 env().get("S3_DIRECTORY_NAME"),
                 Clock.systemDefaultZone(),
                 env().get("S3_BUCKET_NAME"),

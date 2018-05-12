@@ -19,6 +19,7 @@ package shiver.me.timbers.webservice.stub.server.lambda;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -28,8 +29,6 @@ import shiver.me.timbers.webservice.stub.server.Env;
 import shiver.me.timbers.webservice.stub.server.StubRepository;
 import shiver.me.timbers.webservice.stub.server.digest.Digester;
 
-import java.io.FileNotFoundException;
-
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
@@ -38,8 +37,9 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.digester;
 import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.env;
-import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.mapper;
+import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.jsonMapper;
 import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.repository;
+import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.xmlMapper;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest(AmazonS3ClientBuilder.class)
@@ -51,13 +51,27 @@ public class StubLambdaSetupTest {
     }
 
     @Test
-    public void Can_create_a_singleton_mapper() {
+    public void Can_create_a_singleton_json_mapper() {
 
         // When
-        final ObjectMapper actual = mapper();
+        final ObjectMapper actual = jsonMapper();
+        final ObjectMapper expected = jsonMapper();
 
         // Then
         assertThat(actual, not(nullValue()));
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void Can_create_a_singleton_xml_mapper() {
+
+        // When
+        final XmlMapper actual = xmlMapper();
+        final XmlMapper expected = xmlMapper();
+
+        // Then
+        assertThat(actual, not(nullValue()));
+        assertThat(actual, is(expected));
     }
 
     @Test
@@ -68,6 +82,7 @@ public class StubLambdaSetupTest {
         final Env expected = env();
 
         // Then
+        assertThat(actual, not(nullValue()));
         assertThat(actual, is(expected));
     }
 
@@ -84,17 +99,19 @@ public class StubLambdaSetupTest {
         final StubRepository expected = repository();
 
         // Then
+        assertThat(actual, not(nullValue()));
         assertThat(actual, is(expected));
     }
 
     @Test
-    public void Can_create_a_singleton_digester() throws FileNotFoundException {
+    public void Can_create_a_singleton_digester() {
 
         // When
         final Digester actual = digester();
         final Digester expected = digester();
 
         // Then
+        assertThat(actual, not(nullValue()));
         assertThat(actual, is(expected));
     }
 }

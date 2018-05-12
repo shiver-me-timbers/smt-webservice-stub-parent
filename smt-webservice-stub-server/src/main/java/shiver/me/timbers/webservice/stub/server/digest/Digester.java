@@ -38,7 +38,7 @@ public class Digester {
 
     public String digestRequest(StringStubRequest request) {
         final String requestString = cleaner.toCleanString(cleaner.cleanHeaders(cleaner.cleanBody(request)));
-        log.info(format("Digesting XML:\n%s", requestString));
+        log.info(format("Digesting:\n%s", requestString));
         return encoding.toHex(factory.create("MD5").digest(requestString.getBytes()));
     }
 }

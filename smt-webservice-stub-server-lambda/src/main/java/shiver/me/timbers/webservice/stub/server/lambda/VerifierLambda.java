@@ -18,17 +18,18 @@ package shiver.me.timbers.webservice.stub.server.lambda;
 
 import shiver.me.timbers.aws.apigateway.proxy.JsonProxyRequestHandler;
 import shiver.me.timbers.webservice.stub.api.Verifying;
+import shiver.me.timbers.webservice.stub.server.lambda.api.StringVerifying;
 
 import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.digester;
-import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.mapper;
+import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.jsonMapper;
 import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.repository;
 
-public class VerifierLambda extends JsonProxyRequestHandler<Verifying, String> {
+public class VerifierLambda extends JsonProxyRequestHandler<StringVerifying, String> {
 
     public VerifierLambda() {
         super(
-            Verifying.class,
-            mapper(),
+            StringVerifying.class,
+            jsonMapper(),
             new VerifierRequestHandler(digester(), repository())
         );
     }

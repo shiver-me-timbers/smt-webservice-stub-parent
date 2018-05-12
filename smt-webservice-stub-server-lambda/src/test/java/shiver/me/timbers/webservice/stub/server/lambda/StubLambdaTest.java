@@ -36,6 +36,7 @@ import shiver.me.timbers.webservice.stub.server.api.StringStubRequest;
 import shiver.me.timbers.webservice.stub.server.api.StringStubResponse;
 
 import java.io.IOException;
+import java.util.Map;
 
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.Matchers.equalTo;
@@ -52,17 +53,19 @@ import static shiver.me.timbers.webservice.stub.api.StubQuery.q;
 @PrepareForTest(AmazonS3ClientBuilder.class)
 public class StubLambdaTest {
 
-    private RequestHandler<ProxyRequest<String>, ProxyResponse<String>> soapStub;
+    private PathFinder pathFinder;
     private Stub stub;
+    private RequestHandler<ProxyRequest<String>, ProxyResponse<String>> soapStub;
 
     @Before
     public void setUp() {
+        pathFinder = mock(PathFinder.class);
         stub = mock(Stub.class);
-        soapStub = new StubLambda(stub);
+        soapStub = new StubLambda(pathFinder, stub);
     }
 
     @Test
-    public void Can_create_an_S3_stubbing_repository_with_an_env() throws IOException {
+    public void Instantiation_for_coverage() {
 
         PowerMockito.mockStatic(AmazonS3ClientBuilder.class);
 
@@ -91,7 +94,7 @@ public class StubLambdaTest {
 
         // Given
         given(request.getHttpMethod()).willReturn(method);
-        given(request.getPath()).willReturn(path);
+        given(pathFinder.findPath(request)).willReturn(path);
         given(request.getQueryStringParameters()).willReturn(singletonMap(qName, qValue));
         given(request.getHeaders()).willReturn(singletonMap(hName, hValue));
         given(request.getBody()).willReturn(body);

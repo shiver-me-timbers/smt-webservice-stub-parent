@@ -18,17 +18,18 @@ package shiver.me.timbers.webservice.stub.server.lambda;
 
 import shiver.me.timbers.aws.apigateway.proxy.JsonProxyRequestHandler;
 import shiver.me.timbers.webservice.stub.api.Stubbing;
+import shiver.me.timbers.webservice.stub.server.lambda.api.StringStubbing;
 
 import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.digester;
-import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.mapper;
+import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.jsonMapper;
 import static shiver.me.timbers.webservice.stub.server.lambda.StubLambdaSetup.repository;
 
-public class StubberLambda extends JsonProxyRequestHandler<Stubbing, String> {
+public class StubberLambda extends JsonProxyRequestHandler<StringStubbing, String> {
 
     public StubberLambda() {
         super(
-            Stubbing.class,
-            mapper(),
+            StringStubbing.class,
+            jsonMapper(),
             new StubberRequestHandler(digester(), repository())
         );
     }

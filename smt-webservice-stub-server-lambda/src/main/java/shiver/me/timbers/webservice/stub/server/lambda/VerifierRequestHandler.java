@@ -20,13 +20,13 @@ import com.amazonaws.services.lambda.runtime.Context;
 import org.apache.log4j.Logger;
 import shiver.me.timbers.aws.apigateway.proxy.DeserialisedProxyRequestHandler;
 import shiver.me.timbers.aws.apigateway.proxy.ProxyRequest;
-import shiver.me.timbers.webservice.stub.api.Verifying;
 import shiver.me.timbers.webservice.stub.server.StubRepository;
 import shiver.me.timbers.webservice.stub.server.Verifier;
 import shiver.me.timbers.webservice.stub.server.VerifyRequestException;
 import shiver.me.timbers.webservice.stub.server.digest.Digester;
+import shiver.me.timbers.webservice.stub.server.lambda.api.StringVerifying;
 
-class VerifierRequestHandler implements DeserialisedProxyRequestHandler<Verifying, String> {
+class VerifierRequestHandler implements DeserialisedProxyRequestHandler<StringVerifying, String> {
 
     private final Logger log = Logger.getLogger(getClass());
 
@@ -42,7 +42,7 @@ class VerifierRequestHandler implements DeserialisedProxyRequestHandler<Verifyin
 
     @SuppressWarnings("unchecked")
     @Override
-    public StubberProxyResponse handleRequest(ProxyRequest<Verifying> request, Context context) {
+    public StubberProxyResponse handleRequest(ProxyRequest<StringVerifying> request, Context context) {
         log.info("START: Starting verification.");
         try {
             verifier.verify(request.getBody());

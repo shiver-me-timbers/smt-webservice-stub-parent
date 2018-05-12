@@ -25,6 +25,7 @@ import shiver.me.timbers.aws.apigateway.proxy.ProxyRequest;
 import shiver.me.timbers.aws.apigateway.proxy.ProxyResponse;
 import shiver.me.timbers.webservice.stub.api.Stubbing;
 import shiver.me.timbers.webservice.stub.server.Stubber;
+import shiver.me.timbers.webservice.stub.server.lambda.api.StringStubbing;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasEntry;
@@ -37,7 +38,7 @@ import static org.mockito.Mockito.mock;
 public class StubberRequestHandlerTest {
 
     private Stubber stubber;
-    private RequestHandler<ProxyRequest<Stubbing>, ProxyResponse<String>> soapStubbing;
+    private RequestHandler<ProxyRequest<StringStubbing>, ProxyResponse<String>> soapStubbing;
 
     @Before
     public void setUp() {
@@ -49,9 +50,9 @@ public class StubberRequestHandlerTest {
     @SuppressWarnings("unchecked")
     public void Can_stub_a_request() {
 
-        final ProxyRequest<Stubbing> request = mock(ProxyRequest.class);
+        final ProxyRequest<StringStubbing> request = mock(ProxyRequest.class);
 
-        final Stubbing stubbing = mock(Stubbing.class);
+        final StringStubbing stubbing = mock(StringStubbing.class);
 
         // Given
         given(request.getBody()).willReturn(stubbing);

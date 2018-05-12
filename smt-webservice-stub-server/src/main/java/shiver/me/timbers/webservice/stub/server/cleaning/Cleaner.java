@@ -54,7 +54,12 @@ public class Cleaner {
     }
 
     public StringStubRequest cleanBody(StringStubRequest request) {
-        return bodyCleaners.stream().filter(cleaner -> cleaner.supports(request)).findFirst()
+        if (request.getBody() == null) {
+            return request;
+        }
+        return bodyCleaners.stream()
+            .filter(cleaner -> cleaner.supports(request))
+            .findFirst()
             .orElse(new NoOpBodyCleaner())
             .cleanBody(request);
     }
