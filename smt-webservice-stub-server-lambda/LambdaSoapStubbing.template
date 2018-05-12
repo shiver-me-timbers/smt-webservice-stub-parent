@@ -1,109 +1,392 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "SOAP stub test stack.",
+  "Description": "core-webservicestub-project-repo/webservicestub/src/main/aws-template/core-webservicestub-dev-service-stack.json",
   "Parameters": {
-    "StubName": {
+    "ApiDescription": {
       "Type": "String",
-      "Default": "SoapStub",
-      "Description": "This is the name of the SOAP stub lambda."
+      "Default": "This API is used to publish the Web Service Stub endpoints.",
+      "Description": "The description for the APIGateway."
     },
-    "StubbingName": {
+    "ApiStageName": {
       "Type": "String",
-      "Default": "SoapStubbing",
-      "Description": "This is the name of the SOAP stubbing lambda."
+      "Default": "apistub",
+      "Description": "The name of the stage that this API will be deployed to."
     },
-    "BucketName": {
-      "Type": "String",
-      "Default": "core-pipeline-s3bucket",
-      "Description": "This is the name of the S3 bucket that will hold the stubs."
+    "LogRetentionDays": {
+      "Type": "Number",
+      "Default": 1,
+      "Description": "The number of days to keep the CloudWatch logs."
     },
-    "DirectoryName": {
+    "LambdaName": {
       "Type": "String",
-      "Default": "SoapStubs",
-      "Description": "This is the name of the directory in S3 that the stubs will be put."
+      "Default": "web-services-tub",
+      "Description": "This is being used as a constant so leave it as the default value."
+    },
+    "ReleaseVersion": {
+      "Type": "String",
+      "Default": "1.1",
+      "Description": "This is being used as a constant so leave it as the default value."
+    },
+    "StubApiResourcePath": {
+      "Type": "String",
+      "Default": "stub",
+      "Description": "The base path of the Stub endpoint."
+    },
+    "StubberApiResourcePath": {
+      "Type": "String",
+      "Default": "stubber",
+      "Description": "The base path of the Stub endpoint."
+    },
+    "VerifierApiResourcePath": {
+      "Type": "String",
+      "Default": "verifier",
+      "Description": "The base path of the Stub endpoint."
+    },
+    "LambdaTimeout": {
+      "Type": "Number",
+      "Default": 30,
+      "Description": "This number of seconds that the lambda will run before it times out. Default 5 minutes."
+    },
+    "LambdaMemorySize": {
+      "Type": "Number",
+      "Default": 256,
+      "Description": "The amount of memory allocated to the lambda."
+    },
+    "JarName": {
+      "Type": "String",
+      "Default": "webservicestub-1.1.jar",
+      "Description": "The name of the JAR file that contains the code for this lambda."
+    },
+    "StubDirectory": {
+      "Type": "String",
+      "Default": "StubFiles",
+      "Description": "The directory in the S3 bucket that will contain all the stubbed request and response files."
+    },
+    "StubHeadersToKeep": {
+      "Type": "String",
+      "Default": "",
+      "Description": "This is being used as a constant so leave it as the default value."
+    },
+    "StubXmlTagsToIgnore": {
+      "Type": "String",
+      "Default": "Headers,TransactionKey,TransactionDateTime",
+      "Description": "This is being used as a constant so leave it as the default value."
+    },
+    "StubJsonFieldsToIgnore": {
+      "Type": "String",
+      "Default": "",
+      "Description": "This is being used as a constant so leave it as the default value."
     }
   },
   "Resources": {
+    "WebServiceStubApi": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Properties": {
+        "Name": { "Fn::Sub": "${LambdaName}-apigateway" },
+        "Description": { "Ref": "ApiDescription" },
+        "FailOnWarnings": true
+      }
+    },
+    "WebServiceStubApiGatewayLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": { "Fn::Sub": "API-Gateway-Execution-Logs_${StubApi}/${ApiStageName}" },
+        "RetentionInDays": { "Ref": "LogRetentionDays" }
+      }
+    },
+    "WebServiceStubApiAccount": {
+      "Type": "AWS::ApiGateway::Account",
+      "Properties": {
+        "CloudWatchRoleArn": {
+          "Fn::Join": [
+            ":", [
+              "arn:aws:iam:", { "Ref": "AWS::AccountId" },
+              "role/core-apigateway-cloudwatch-role"
+            ]
+          ]
+        }
+      }
+    },
+    "WebServiceStubUsagePlan": {
+      "DependsOn": [
+        "WebServiceStubApi",
+        "WebServiceStubApiStage",
+        "WebServiceStubApiKey"
+      ],
+      "Type": "AWS::ApiGateway::UsagePlan",
+      "Properties": {
+        "UsagePlanName": { "Fn::Sub": "${LambdaName}-usageplan" },
+        "ApiStages": [
+          {
+            "ApiId": { "Ref": "WebServiceStubApi" },
+            "Stage": { "Ref": "ApiStageName" }
+          }
+        ],
+        "Description": { "Ref": "ApiDescription" },
+        "Quota": {
+          "Limit": 1000,
+          "Period": "DAY"
+        },
+        "Throttle": {
+          "BurstLimit": 20,
+          "RateLimit": 10
+        }
+      }
+    },
+    "WebServiceStubUsagePlanKey": {
+      "DependsOn": [
+        "WebServiceStubUsagePlan",
+        "WebServiceStubApiKey"
+      ],
+      "Type": "AWS::ApiGateway::UsagePlanKey",
+      "Properties": {
+        "KeyId": { "Ref": "WebServiceStubApiKey" },
+        "KeyType": "API_KEY",
+        "UsagePlanId": { "Ref": "WebServiceStubUsagePlan" }
+      }
+    },
+    "WebServiceStubApiKey": {
+      "DependsOn": [
+        "WebServiceStubApi",
+        "WebServiceStubApiStage"
+      ],
+      "Type": "AWS::ApiGateway::ApiKey",
+      "Properties": {
+        "Description": { "Ref": "ApiDescription" },
+        "Enabled": true,
+        "Name": { "Fn::Sub": "${LambdaName}-apikey" },
+        "StageKeys": [
+          {
+            "RestApiId": { "Ref": "WebServiceStubApi" },
+            "StageName": { "Ref": "ApiStageName" }
+          }
+        ]
+      }
+    },
+    "WebServiceStubApiDeployment": {
+      "Type": "AWS::ApiGateway::Deployment",
+      "DependsOn": [
+        "StubApiMethod",
+        "StubApiMethod",
+        "StubApiMethod"
+      ],
+      "Properties": {
+        "RestApiId": { "Ref": "WebServiceStubApi" }
+      }
+    },
+    "WebServiceStubApiStage": {
+      "DependsOn": ["WebServiceStubApiDeployment"],
+      "Type": "AWS::ApiGateway::Stage",
+      "Properties": {
+        "DeploymentId": { "Ref": "WebServiceStubApiDeployment" },
+        "MethodSettings": [
+          {
+            "DataTraceEnabled": true,
+            "HttpMethod": "*",
+            "LoggingLevel": "ERROR",
+            "ResourcePath": "/*"
+          }
+        ],
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "StageName": { "Ref": "ApiStageName" }
+      }
+    },
+    "StubApiResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "DependsOn": ["WebServiceStubApi"],
+      "Properties": {
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "ParentId": { "Fn::GetAtt": ["WebServiceStubApi", "RootResourceId"] },
+        "PathPart": { "Ref": "StubApiResourcePath" }
+      }
+    },
+    "StubProxyApiResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "DependsOn": ["StubApiResource"],
+      "Properties": {
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "ParentId": { "Ref": "StubApiResource" },
+        "PathPart": "{proxy+}"
+      }
+    },
+    "StubberApiResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "DependsOn": ["WebServiceStubApi"],
+      "Properties": {
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "ParentId": { "Fn::GetAtt": ["WebServiceStubApi", "RootResourceId"] },
+        "PathPart": { "Ref": "StubberApiResourcePath" }
+      }
+    },
+    "VerifierApiResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "DependsOn": ["WebServiceStubApi"],
+      "Properties": {
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "ParentId": { "Fn::GetAtt": ["WebServiceStubApi", "RootResourceId"] },
+        "PathPart": { "Ref": "VerifierApiResourcePath" }
+      }
+    },
+    "StubApiMethod": {
+      "DependsOn": [
+        "WebServiceStubApi",
+        "StubApiResource"
+      ],
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ResourceId": { "Ref": "StubApiResource" },
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "HttpMethod": "ANY",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StubApiLambda.Arn}/invocations"
+          }
+        }
+      }
+    },
+    "StubProxyApiMethod": {
+      "DependsOn": [
+        "WebServiceStubApi",
+        "StubProxyApiResource"
+      ],
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ResourceId": { "Ref": "StubProxyApiResource" },
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "HttpMethod": "ANY",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StubLambda.Arn}/invocations"
+          }
+        }
+      }
+    },
+    "StubberApiMethod": {
+      "DependsOn": [
+        "WebServiceStubApi",
+        "StubberApiResource"
+      ],
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ResourceId": { "Ref": "StubberApiResource" },
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "HttpMethod": "PUT",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${StubberLambda.Arn}/invocations"
+          }
+        }
+      }
+    },
+    "VerifierApiMethod": {
+      "DependsOn": [
+        "WebServiceStubApi",
+        "VerifierApiResource"
+      ],
+      "Type": "AWS::ApiGateway::Method",
+      "Properties": {
+        "ResourceId": { "Ref": "VerifierApiResource" },
+        "RestApiId": { "Ref": "WebServiceStubApi" },
+        "HttpMethod": "POST",
+        "AuthorizationType": "NONE",
+        "Integration": {
+          "Type": "AWS_PROXY",
+          "IntegrationHttpMethod": "POST",
+          "Uri": {
+            "Fn::Sub": "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${VerifierLambda.Arn}/invocations"
+          }
+        }
+      }
+    },
     "StubLambda": {
       "Type": "AWS::Lambda::Function",
-      "DependsOn": [
-        "LambdaRole"
-      ],
       "Properties": {
-        "FunctionName": {
-          "Ref": "StubName"
-        },
-        "Handler": "nz.co.vector.aws.lambda.soap.stub.LambdaSoapStub",
-        "Role": {
-          "Fn::GetAtt": [
-            "LambdaRole",
-            "Arn"
-          ]
-        },
+        "FunctionName": { "Fn::Sub": "${LambdaName}-stub-lambda" },
+        "Description": { "Ref": "ReleaseVersion" },
+        "Handler": "shiver.me.timbers.webservice.stub.server.lambda.StubLambda",
+        "Role": { "Fn::GetAtt": ["StubLambdaRole", "Arn"] },
         "Code": {
-          "S3Bucket": {
-            "Ref": "BucketName"
-          },
-          "S3Key": "lambda-soap-stub-1.0-SNAPSHOT.jar"
+          "S3Bucket": { "Ref": "LambdaS3Bucket" },
+          "S3Key": { "Ref": "JarName" }
         },
         "Runtime": "java8",
-        "Timeout": "300",
-        "MemorySize": 256,
+        "Timeout": { "Ref": "LambdaTimeout" },
+        "MemorySize": { "Ref": "LambdaMemorySize" },
         "Environment": {
           "Variables": {
-            "S3_BUCKET_NAME": {
-              "Ref": "BucketName"
-            },
-            "S3_DIRECTORY_NAME": {
-              "Ref": "DirectoryName"
-            }
+            "S3_BUCKET_NAME": { "Ref": "LambdaS3Bucket" },
+            "S3_DIRECTORY_NAME": { "Ref": "StubDirectory" },
+            "STUB_HEADERS_TO_KEEP": { "Ref": "StubHeadersToKeep" },
+            "STUB_XML_TAGS_TO_IGNORE": { "Ref": "StubXmlTagsToIgnore" },
+            "STUB_JSON_FIELDS_TO_IGNORE": { "Ref": "StubJsonFieldsToIgnore" }
           }
         }
       }
     },
-    "StubbingLambda": {
+    "StubberLambda": {
       "Type": "AWS::Lambda::Function",
-      "DependsOn": [
-        "LambdaRole"
-      ],
       "Properties": {
-        "FunctionName": {
-          "Ref": "StubbingName"
-        },
-        "Handler": "nz.co.vector.aws.lambda.soap.stub.LambdaSoapStubbing",
-        "Role": {
-          "Fn::GetAtt": [
-            "LambdaRole",
-            "Arn"
-          ]
-        },
+        "FunctionName": { "Fn::Sub": "${LambdaName}-stubber-lambda" },
+        "Description": { "Ref": "ReleaseVersion" },
+        "Handler": "shiver.me.timbers.webservice.stub.server.lambda.StubberLambda",
+        "Role": { "Fn::GetAtt": ["StubLambdaRole", "Arn"] },
         "Code": {
-          "S3Bucket": {
-            "Ref": "BucketName"
-          },
-          "S3Key": "lambda-soap-stub-1.0-SNAPSHOT.jar"
+          "S3Bucket": { "Ref": "LambdaS3Bucket" },
+          "S3Key": { "Ref": "JarName" }
         },
         "Runtime": "java8",
-        "Timeout": "300",
-        "MemorySize": 256,
+        "Timeout": { "Ref": "LambdaTimeout" },
+        "MemorySize": { "Ref": "LambdaMemorySize" },
         "Environment": {
           "Variables": {
-            "S3_BUCKET_NAME": {
-              "Ref": "BucketName"
-            },
-            "S3_DIRECTORY_NAME": {
-              "Ref": "DirectoryName"
-            }
+            "S3_BUCKET_NAME": { "Ref": "LambdaS3Bucket" },
+            "S3_DIRECTORY_NAME": { "Ref": "StubDirectory" },
+            "STUB_HEADERS_TO_KEEP": { "Ref": "StubHeadersToKeep" },
+            "STUB_XML_TAGS_TO_IGNORE": { "Ref": "StubXmlTagsToIgnore" },
+            "STUB_JSON_FIELDS_TO_IGNORE": { "Ref": "StubJsonFieldsToIgnore" }
           }
         }
       }
     },
-    "LambdaRole": {
+    "VerifierLambda": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "FunctionName": { "Fn::Sub": "${LambdaName}-verifier-lambda" },
+        "Description": { "Ref": "ReleaseVersion" },
+        "Handler": "shiver.me.timbers.webservice.stub.server.lambda.VerifierLambda",
+        "Role": { "Fn::GetAtt": ["StubLambdaRole", "Arn"] },
+        "Code": {
+          "S3Bucket": { "Ref": "LambdaS3Bucket" },
+          "S3Key": { "Ref": "JarName" }
+        },
+        "Runtime": "java8",
+        "Timeout": { "Ref": "LambdaTimeout" },
+        "MemorySize": { "Ref": "LambdaMemorySize" },
+        "Environment": {
+          "Variables": {
+            "S3_BUCKET_NAME": { "Ref": "LambdaS3Bucket" },
+            "S3_DIRECTORY_NAME": { "Ref": "StubDirectory" },
+            "STUB_HEADERS_TO_KEEP": { "Ref": "StubHeadersToKeep" },
+            "STUB_XML_TAGS_TO_IGNORE": { "Ref": "StubXmlTagsToIgnore" },
+            "STUB_JSON_FIELDS_TO_IGNORE": { "Ref": "StubJsonFieldsToIgnore" }
+          }
+        }
+      }
+    },
+    "StubLambdaRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
-        "RoleName": {
-          "Fn::Sub": "${StubName}-role"
-        },
+        "RoleName": { "Fn::Sub": "${StubLambda}-stub-role" },
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"],
         "AssumeRolePolicyDocument": {
           "Statement": [
             {
@@ -111,7 +394,8 @@
               "Principal": {
                 "Service": [
                   "lambda.amazonaws.com"
-                ]
+                ],
+                "AWS": ["arn:aws:iam::259292411567:root"]
               },
               "Action": [
                 "sts:AssumeRole"
@@ -122,34 +406,158 @@
         "Path": "/"
       }
     },
-    "LambdaPolicy": {
-      "Type": "AWS::IAM::Policy",
-      "DependsOn": [
-        "LambdaRole"
-      ],
+    "StubberLambdaRole": {
+      "Type": "AWS::IAM::Role",
       "Properties": {
-        "PolicyName": {
-          "Fn::Sub": "${StubName}-policy"
-        },
-        "PolicyDocument": {
+        "RoleName": { "Fn::Sub": "${StubberLambda}-stub-role" },
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"],
+        "AssumeRolePolicyDocument": {
           "Statement": [
             {
               "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ],
+                "AWS": ["arn:aws:iam::259292411567:root"]
+              },
               "Action": [
-                "logs:CreateLogGroup",
-                "logs:CreateLogStream",
-                "logs:PutLogEvents",
-                "s3:*"
-              ],
-              "Resource": "*"
+                "sts:AssumeRole"
+              ]
             }
           ]
         },
-        "Roles": [
-          {
-            "Ref": "LambdaRole"
-          }
-        ]
+        "Path": "/"
+      }
+    },
+    "VerifierLambdaRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "RoleName": { "Fn::Sub": "${VerifierLambda}-stub-role" },
+        "ManagedPolicyArns": ["arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"],
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ],
+                "AWS": ["arn:aws:iam::259292411567:root"]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Path": "/"
+      }
+    },
+    "StubLambdaPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "DependsOn": [
+        "StubLambda",
+        "WebServiceStubApi"
+      ],
+      "Properties": {
+        "Action": "lambda:invokeFunction",
+        "FunctionName": { "Fn::GetAtt": ["StubLambda", "Arn"] },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": { "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebServiceStubApi}/*" }
+      }
+    },
+    "StubberLambdaPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "DependsOn": [
+        "StubberLambda",
+        "WebServiceStubApi"
+      ],
+      "Properties": {
+        "Action": "lambda:invokeFunction",
+        "FunctionName": { "Fn::GetAtt": ["StubberLambda", "Arn"] },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": { "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebServiceStubApi}/*" }
+      }
+    },
+    "VerifierLambdaPermission": {
+      "Type": "AWS::Lambda::Permission",
+      "DependsOn": [
+        "VerifierLambda",
+        "WebServiceStubApi"
+      ],
+      "Properties": {
+        "Action": "lambda:invokeFunction",
+        "FunctionName": { "Fn::GetAtt": ["VerifierLambda", "Arn"] },
+        "Principal": "apigateway.amazonaws.com",
+        "SourceArn": { "Fn::Sub": "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${WebServiceStubApi}/*" }
+      }
+    },
+    "StubLambdaLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": { "Fn::Sub": "/aws/lambda/${StubLambda}" },
+        "RetentionInDays": { "Ref": "LogRetentionDays" }
+      }
+    },
+    "StubberLambdaLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": { "Fn::Sub": "/aws/lambda/${StubberLambda}" },
+        "RetentionInDays": { "Ref": "LogRetentionDays" }
+      }
+    },
+    "VerifierLambdaLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": { "Fn::Sub": "/aws/lambda/${VerifierLambda}" },
+        "RetentionInDays": { "Ref": "LogRetentionDays" }
+      }
+    },
+    "LambdaS3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "BucketName": { "Fn::Sub": "${LambdaName}-s3" },
+        "LifecycleConfiguration": {
+          "Rules": [
+            {
+              "Id": "CleanupWebServiceStubFiles",
+              "ExpirationInDays": 1,
+              "Status": "Enabled",
+              "Prefix": "WebServiceStub"
+            }
+          ]
+        }
+      }
+    },
+    "LambdaS3BucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "DependsOn": ["LambdaS3Bucket"],
+      "Properties": {
+        "Bucket": { "Ref": "LambdaS3Bucket" },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:DeleteObject",
+                "s3:ListBucket"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                { "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "LambdaS3Bucket" }]] },
+                { "Fn::Join": ["", ["arn:aws:s3:::", { "Ref": "LambdaS3Bucket" }, "/*"]] }
+              ],
+              "Roles": [
+                { "Ref": "StubLambdaRole" },
+                { "Ref": "StubberLambdaRole" },
+                { "Ref": "VerifierLambdaRole" }
+              ]
+            }
+          ]
+        }
       }
     }
   }
