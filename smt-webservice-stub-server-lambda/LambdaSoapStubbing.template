@@ -395,7 +395,7 @@
                 "Service": [
                   "lambda.amazonaws.com"
                 ],
-                "AWS": ["arn:aws:iam::259292411567:root"]
+                "AWS": [{ "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:root" }]
               },
               "Action": [
                 "sts:AssumeRole"
@@ -419,7 +419,7 @@
                 "Service": [
                   "lambda.amazonaws.com"
                 ],
-                "AWS": ["arn:aws:iam::259292411567:root"]
+                "AWS": [{ "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:root" }]
               },
               "Action": [
                 "sts:AssumeRole"
@@ -443,7 +443,7 @@
                 "Service": [
                   "lambda.amazonaws.com"
                 ],
-                "AWS": ["arn:aws:iam::259292411567:root"]
+                "AWS": [{ "Fn::Sub": "arn:aws:iam::${AWS::AccountId}:root" }]
               },
               "Action": [
                 "sts:AssumeRole"
