@@ -21,7 +21,6 @@ import org.apache.log4j.Logger;
 import shiver.me.timbers.aws.apigateway.proxy.DeserialisedProxyRequestHandler;
 import shiver.me.timbers.aws.apigateway.proxy.ProxyRequest;
 import shiver.me.timbers.aws.apigateway.proxy.ProxyResponse;
-import shiver.me.timbers.webservice.stub.api.Stubbing;
 import shiver.me.timbers.webservice.stub.server.StubRepository;
 import shiver.me.timbers.webservice.stub.server.Stubber;
 import shiver.me.timbers.webservice.stub.server.digest.Digester;

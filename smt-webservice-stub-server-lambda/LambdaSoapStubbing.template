@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "core-webservicestub-project-repo/webservicestub/src/main/aws-template/core-webservicestub-dev-service-stack.json",
+  "Description": "This stack creates all the resources required for the webservice stubbing endpoints.",
   "Parameters": {
     "ApiDescription": {
       "Type": "String",
@@ -101,7 +101,7 @@
           "Fn::Join": [
             ":", [
               "arn:aws:iam:", { "Ref": "AWS::AccountId" },
-              "role/core-apigateway-cloudwatch-role"
+              "role/apigateway-cloudwatch-role"
             ]
           ]
         }

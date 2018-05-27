@@ -42,10 +42,12 @@ public class MapKeyFilterTest {
         final String key4 = someAlphanumericString(8);
         final String key5 = someAlphanumericString(13);
         final String key6 = someAlphanumericString(21);
+        final String key7 = someAlphanumericString(21);
         final String value1 = someAlphanumericString(2);
         final String value2 = someAlphanumericString(2);
         final String value3 = someAlphanumericString(2);
         final String value4 = someAlphanumericString(2);
+        final String value5 = someAlphanumericString(2);
 
         final Map<String, Object> expected = new HashMap<>();
 
@@ -53,9 +55,9 @@ public class MapKeyFilterTest {
         map.put(key1, value1);
         map.put(key2, value2);
         map.put(key3, singletonMap(key4, value3));
-        map.put(key5, singletonMap(key6, value4));
+        map.put(key5, new HashMap<String, String>() {{put(key6, value4); put(key7, value5);}});
         expected.put(key1, value1);
-        expected.put(key5, emptyMap());
+        expected.put(key5, singletonMap(key7, value5));
 
         // When
         final Map<String, Object> actual = new MapKeyFilter(new HashSet<>(asList(key2, key3, key6))).filterKeys(map);
